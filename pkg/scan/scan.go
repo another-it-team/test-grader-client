@@ -3,6 +3,7 @@ package scan
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -18,6 +19,8 @@ import (
 const (
 	POST = "POST"
 	GET  = "GET"
+
+	OK = "OK"
 )
 
 var opt = option.GetInstance()
@@ -31,11 +34,12 @@ func CheckFolder(folder string) bool {
 	return true
 }
 
-func ProcessFolder(folder string, writeChan chan<- []string) error {
+func ProcessFolder(folder, id string, writeChan chan<- []string) error {
 	files := utils.GetFilesByType(folder, opt.FilesExtension)
 	fmt.Printf("Found %d files\n", len(files))
 
 	client := &http.Client{}
+	url := opt.UploadEndPoint + "/" + id
 	parans := map[string]string{
 		"folder": folder,
 		"name":   "",
@@ -48,7 +52,7 @@ func ProcessFolder(folder string, writeChan chan<- []string) error {
 		}
 		parans["name"] = file
 
-		req, err := UploadFile(file, parans)
+		req, err := UploadFile(file, url, parans)
 		if req != nil && err == nil {
 			res, err := client.Do(req)
 			if err != nil {
@@ -84,7 +88,7 @@ func ProcessFolder(folder string, writeChan chan<- []string) error {
 	return nil
 }
 
-func UploadFile(filename string, params map[string]string) (*http.Request, error) {
+func UploadFile(filename, url string, params map[string]string) (*http.Request, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -108,7 +112,58 @@ func UploadFile(filename string, params map[string]string) (*http.Request, error
 		return nil, err
 	}
 
-	req, err := http.NewRequest(POST, opt.UploadEndPoint, body)
+	req, err := http.NewRequest(POST, url, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return req, err
+}
+
+func CreateSession() (id string, err error) {
+	client := &http.Client{}
+
+	req, err := http.NewRequest(POST, opt.CreateSessionEndPoint, bytes.NewBuffer(nil))
+	if err != nil {
+		return
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+
+	body := &bytes.Buffer{}
+	_, err = body.ReadFrom(res.Body)
+	if err != nil {
+		return
+	}
+
+	var response map[string]string
+	err = json.Unmarshal(body.Bytes(), &response)
+	if err != nil {
+		return
+	}
+
+	if response["msg"] != OK {
+		err = errors.New(response["msg"])
+		return
+	}
+	id = response["idx"]
+
+	return
+}
+
+func GetImagesResult(path, id string) error {
+	zipfile := path + ".zip"
+
+	err := utils.DownloadFile(zipfile, opt.DownloadEndPoint+"/"+id)
+	if err != nil {
+		return err
+	}
+
+	err = utils.Unzip(zipfile, path)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

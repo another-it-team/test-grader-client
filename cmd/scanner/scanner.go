@@ -23,6 +23,14 @@ func main() {
 
 	defer utils.Duration(time.Now(), "Scanner")
 
+	fmt.Println("Create session...")
+	id, err := scan.CreateSession()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("Session %s was created\n", id)
+
 	fmt.Printf("Scanning %s...\n", opt.SrcDirectory)
 	folders, err := ioutil.ReadDir(opt.SrcDirectory)
 	if err != nil {
@@ -55,7 +63,7 @@ func main() {
 		}()
 
 		fmt.Printf("Processing %s\n", name)
-		err := scan.ProcessFolder(name, writeChan)
+		err := scan.ProcessFolder(name, id, writeChan)
 		if err != nil {
 			fmt.Println(err)
 			fail++
@@ -76,6 +84,14 @@ func main() {
 	}
 
 	fmt.Printf("Process success %d folders, failed %d\n", count, fail)
+
+	fmt.Println("Getting zip result file...")
+	err = scan.GetImagesResult(opt.SrcDirectory, id)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Done")
 }
 
 func Auth() bool {

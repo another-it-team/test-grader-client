@@ -30,7 +30,9 @@ type Option struct {
 	Domain string
 
 	// EndPoint API
-	UploadEndPoint string
+	UploadEndPoint        string
+	CreateSessionEndPoint string
+	DownloadEndPoint      string
 
 	// Dir
 	SrcDirectory string
@@ -101,6 +103,8 @@ func parse() {
 
 	flag.StringVar(&option.Domain, "domain", "", "server that host API")
 	flag.StringVar(&option.UploadEndPoint, "upload", "", "upload API")
+	flag.StringVar(&option.CreateSessionEndPoint, "create-session", "", "create session API")
+	flag.StringVar(&option.DownloadEndPoint, "download", "", "download result file API")
 
 	flag.StringVar(&option.SrcDirectory, "src", ".", "source folder")
 	flag.StringVar(&option.Dst, "dst", "result.csv", "destination result file")
@@ -122,6 +126,8 @@ func parse() {
 	option = opt
 
 	option.UploadEndPoint = fmt.Sprintf("%s/%s", option.Domain, option.UploadEndPoint)
+	option.CreateSessionEndPoint = fmt.Sprintf("%s/%s", option.Domain, option.CreateSessionEndPoint)
+	option.DownloadEndPoint = fmt.Sprintf("%s/%s", option.Domain, option.DownloadEndPoint)
 
 	CleanUp()
 }
