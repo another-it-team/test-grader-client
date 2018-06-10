@@ -43,6 +43,11 @@ func (r *Report) Add(data []string) {
 }
 
 func (r *Report) ToCSV(dst string) error {
+	if r.Size() == 0 {
+		fmt.Println("Data empty")
+		return nil
+	}
+
 	f, err := os.Create(dst)
 	if err != nil {
 		return err

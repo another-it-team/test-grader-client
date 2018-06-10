@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/bgo-education/test-grader-client/pkg/utils"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,10 +20,13 @@ const (
 	configURL = "https://bgo.edu.vn/test-grader-config.json"
 )
 
-var logger = logrus.WithField("module", "option")
 var option *Option
 
 type Option struct {
+	// Auth
+	Username string
+	Password string
+
 	Domain string
 
 	// EndPoint API
@@ -44,18 +46,18 @@ type Option struct {
 }
 
 func init() {
-	err := utils.DownloadFile(PathToConfig(true), configURL)
+	err := utils.DownloadFile(PathToConfig(), configURL)
 	if err != nil {
-		logger.Error(err)
+		fmt.Println(err)
 		return
 	}
-	logger.Info("Download config file success!")
+	fmt.Println("Download config file success!")
 }
 
 func LoadConfigFromFile() (opt *Option, err error) {
 	opt = &Option{}
 
-	b, err := ioutil.ReadFile(PathToConfig(false))
+	b, err := ioutil.ReadFile(PathToConfig())
 	if err != nil {
 		return
 	}
@@ -65,22 +67,19 @@ func LoadConfigFromFile() (opt *Option, err error) {
 		return
 	}
 
-	logger.Info("Load config from file success!")
+	fmt.Println("Load config from file success!")
 
 	return opt, nil
 }
 
 func CleanUp() {
-	os.Remove(PathToConfig(false))
+	os.Remove(PathToConfig())
 }
 
-func PathToConfig(verbose bool) string {
+func PathToConfig() string {
 	for _, elem := range os.Environ() {
 		variable := strings.Split(elem, "=")
 		if variable[0] == "TEMP" {
-			if verbose {
-				logger.Infof("Found TEMP folder at: %s", variable[1])
-			}
 			return fmt.Sprintf("%s/%s", variable[1], config)
 		}
 	}
@@ -97,6 +96,9 @@ func GetInstance() *Option {
 func parse() {
 	option = &Option{}
 
+	flag.StringVar(&option.Username, "username", "", "username")
+	flag.StringVar(&option.Password, "password", "", "password")
+
 	flag.StringVar(&option.Domain, "domain", "", "server that host API")
 	flag.StringVar(&option.UploadEndPoint, "upload", "", "upload API")
 
@@ -106,7 +108,7 @@ func parse() {
 	flag.IntVar(&option.NumCau, "num", 60, "sl questions")
 
 	flag.BoolVar(&option.Override, "override", false, "override last result")
-	flag.BoolVar(&option.Verbose, "verbose", true, "show log")
+	flag.BoolVar(&option.Verbose, "verbose", false, "show log")
 
 	option.FilesExtension = []string{JPG, PNG, JPEG}
 
@@ -114,7 +116,7 @@ func parse() {
 
 	opt, err := LoadConfigFromFile()
 	if err != nil {
-		logger.Error(err)
+		fmt.Println(err)
 		return
 	}
 	option = opt

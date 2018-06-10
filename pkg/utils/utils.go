@@ -1,26 +1,25 @@
 package utils
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
-var logger = logrus.WithField("module", "duration")
-
 func Duration(start time.Time, job string) {
-	logger.Infof("Job %s cost %v", job, time.Now().Sub(start))
+	fmt.Printf("Job %s cost %v\n", job, time.Now().Sub(start))
 }
 
 func GetFilesByType(folder string, exts []string) (files []string) {
 	for _, dtype := range exts {
 		fs, err := filepath.Glob(filepath.Join(folder, "*"+dtype))
 		if err != nil {
-			logger.Error(err)
+			fmt.Println(err)
 			continue
 		}
 
@@ -51,4 +50,10 @@ func DownloadFile(filepath string, url string) error {
 	}
 
 	return nil
+}
+
+func ToMD5(input string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(input))
+	return hex.EncodeToString(hasher.Sum(nil))
 }

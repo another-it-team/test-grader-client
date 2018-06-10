@@ -3,6 +3,7 @@ package scan
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/bgo-education/test-grader-client/pkg/option"
 	"github.com/bgo-education/test-grader-client/pkg/utils"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -20,47 +20,57 @@ const (
 )
 
 var opt = option.GetInstance()
-var logger = logrus.WithField("module", "scan")
+
+func CheckFolder(folder string) bool {
+	f, err := os.Open(filepath.Join(folder, opt.Dst))
+	if err != nil {
+		return false
+	}
+	f.Close()
+	return true
+}
 
 func ProcessFolder(folder string, writeChan chan<- []string) error {
 	files := utils.GetFilesByType(folder, opt.FilesExtension)
-	logger.Infof("Found %d files", len(files))
+	fmt.Printf("Found %d files\n", len(files))
 
 	client := &http.Client{}
 
 	for _, file := range files {
 		if opt.Verbose {
-			logger.Infof("Read %s", file)
+			fmt.Printf("Read %s\n", file)
 		}
 
 		req, err := UploadFile(file)
 		if req != nil && err == nil {
 			res, err := client.Do(req)
 			if err != nil {
-				logger.Error(err)
+				fmt.Println(err)
 				continue
 			}
 
 			body := &bytes.Buffer{}
 			_, err = body.ReadFrom(res.Body)
 			if err != nil {
-				logger.Error(err)
+				fmt.Println(err)
+				continue
 			}
 			res.Body.Close()
 
 			var data []string
 			err = json.Unmarshal(body.Bytes(), &data)
 			if err != nil {
-				logger.Error(err)
+				fmt.Println(err)
+				continue
 			}
 
 			writeChan <- data
 
 			if opt.Verbose {
-				logger.Infof("File %s, status code: %d", file, res.StatusCode)
+				fmt.Printf("File %s, status code: %d\n", file, res.StatusCode)
 			}
 		} else {
-			logger.Error(err)
+			fmt.Println(err)
 		}
 	}
 
