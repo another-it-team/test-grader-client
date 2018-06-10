@@ -15,9 +15,8 @@ import (
 var opt = option.GetInstance()
 
 func main() {
-	if !Auth() {
+	for !Auth() {
 		fmt.Println("Wrong username or password!")
-		return
 	}
 	fmt.Println("Authentication successful!")
 

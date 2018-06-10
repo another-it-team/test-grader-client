@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -101,4 +102,14 @@ func Unzip(src string, dest string) error {
 		rc.Close()
 	}
 	return nil
+}
+
+func GetCurrentDir() (dir string, err error) {
+	dir, err = filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		return
+	}
+	temp := strings.Split(dir, "\\")
+	dir = strings.ToLower(temp[len(temp)-1])
+	return
 }

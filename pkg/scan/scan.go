@@ -20,10 +20,13 @@ const (
 	POST = "POST"
 	GET  = "GET"
 
+	JSON = "application/json"
+
 	OK = "OK"
 )
 
 var opt = option.GetInstance()
+var lenHeader = len(Header(opt.NumCau))
 
 func CheckFolder(folder string) bool {
 	f, err := os.Open(filepath.Join(folder, opt.Dst))
@@ -68,14 +71,19 @@ func ProcessFolder(folder, id string, writeChan chan<- []string) error {
 			}
 			res.Body.Close()
 
-			var data []string
+			var data GraderRes
 			err = json.Unmarshal(body.Bytes(), &data)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 
-			writeChan <- data
+			if data.Msg != OK {
+				fmt.Println(data.Msg)
+				continue
+			}
+
+			writeChan <- data.ToSlice(lenHeader)
 
 			if opt.Verbose {
 				fmt.Printf("File %s, status code: %d\n", file, res.StatusCode)
@@ -118,36 +126,29 @@ func UploadFile(filename, url string, params map[string]string) (*http.Request, 
 }
 
 func CreateSession() (id string, err error) {
-	client := &http.Client{}
-
-	req, err := http.NewRequest(POST, opt.CreateSessionEndPoint, bytes.NewBuffer(nil))
+	dir, err := utils.GetCurrentDir()
 	if err != nil {
 		return
 	}
 
-	res, err := client.Do(req)
+	jsonStr := []byte(`{"name":"` + dir + `","override":"` + strconv.FormatBool(true) + `"}`)
+	res, err := http.Post(opt.CreateSessionEndPoint, JSON, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return
 	}
 	defer res.Body.Close()
 
-	body := &bytes.Buffer{}
-	_, err = body.ReadFrom(res.Body)
+	response := &SessionRes{}
+	err = json.NewDecoder(res.Body).Decode(response)
 	if err != nil {
 		return
 	}
 
-	var response map[string]string
-	err = json.Unmarshal(body.Bytes(), &response)
-	if err != nil {
+	if response.Msg != OK {
+		err = errors.New(response.Msg)
 		return
 	}
-
-	if response["msg"] != OK {
-		err = errors.New(response["msg"])
-		return
-	}
-	id = response["idx"]
+	id = response.Idx
 
 	return
 }
