@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/kietdinh/test-grader-client/pkg/option"
-	"github.com/kietdinh/test-grader-client/pkg/scan"
-	"github.com/kietdinh/test-grader-client/pkg/utils"
+	"github.com/bgo-education/test-grader-client/pkg/option"
+	"github.com/bgo-education/test-grader-client/pkg/scan"
+	"github.com/bgo-education/test-grader-client/pkg/utils"
 	"github.com/sirupsen/logrus"
 )
 

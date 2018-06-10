@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kietdinh/test-grader-client/pkg/utils"
+	"github.com/bgo-education/test-grader-client/pkg/utils"
 	"github.com/sirupsen/logrus"
 )
 
