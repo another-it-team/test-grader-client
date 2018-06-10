@@ -2,7 +2,6 @@ package main
 
 import (
 	"io/ioutil"
-	"os"
 	"time"
 
 	"github.com/bgo-education/test-grader-client/pkg/option"
@@ -14,23 +13,8 @@ import (
 var opt = option.GetInstance()
 var logger = logrus.WithField("module", "main")
 
-func init() {
-	err := os.MkdirAll(opt.DstDirectory, os.ModePerm)
-	if err != nil {
-		logger.Error(err)
-	}
-}
-
 func main() {
 	defer utils.Duration(time.Now(), "Scanner")
-
-	logger.Info("Create session...")
-	id, err := scan.CreateSession()
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	logger.Infof("Session %d was created", id)
 
 	logger.Infof("Scanning %s...", opt.SrcDirectory)
 	folders, err := ioutil.ReadDir(opt.SrcDirectory)
@@ -40,6 +24,15 @@ func main() {
 	}
 	logger.Infof("Found %d files", len(folders))
 
+	report := scan.NewReport(scan.Header(opt.NumCau))
+
+	writeChan := make(chan []string, 1000)
+	go func() {
+		for d := range writeChan {
+			report.Add(d)
+		}
+	}()
+
 	count, fail := 0, 0
 	for _, folder := range folders {
 		if !folder.IsDir() {
@@ -48,7 +41,7 @@ func main() {
 
 		name := folder.Name()
 		logger.Infof("Processing %s", name)
-		err := scan.ProcessFolder(name, id)
+		err := scan.ProcessFolder(name, writeChan)
 		if err != nil {
 			logger.Error(err)
 			fail++
@@ -60,12 +53,7 @@ func main() {
 
 	logger.Infof("Process success %d folders, failed %d", count, fail)
 
-	err = scan.CloseSession(id)
-	if err != nil {
-		logger.Error(err)
-	}
-
-	err = scan.GetResultFile(id)
+	err = report.ToCSV(opt.Dst)
 	if err != nil {
 		logger.Error(err)
 	}

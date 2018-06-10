@@ -28,16 +28,16 @@ type Option struct {
 	Domain string
 
 	// EndPoint API
-	UploadEndPoint        string
-	CreateSessionEndPoint string
-	CloseSessionEndPoint  string
-	GetResultEndPoint     string
+	UploadEndPoint string
 
 	// Dir
 	SrcDirectory string
-	DstDirectory string
+	Dst          string
 
 	FilesExtension []string
+
+	// SL Questions
+	NumCau int
 
 	Override bool
 	Verbose  bool
@@ -99,12 +99,11 @@ func parse() {
 
 	flag.StringVar(&option.Domain, "domain", "", "server that host API")
 	flag.StringVar(&option.UploadEndPoint, "upload", "", "upload API")
-	flag.StringVar(&option.CreateSessionEndPoint, "create-session", "", "create session API")
-	flag.StringVar(&option.CloseSessionEndPoint, "close-session", "", "close session API")
-	flag.StringVar(&option.GetResultEndPoint, "get-result", "", "get result file API")
 
 	flag.StringVar(&option.SrcDirectory, "src", ".", "source folder")
-	flag.StringVar(&option.DstDirectory, "dst", "result", "destination folder")
+	flag.StringVar(&option.Dst, "dst", "result.csv", "destination result file")
+
+	flag.IntVar(&option.NumCau, "num", 60, "sl questions")
 
 	flag.BoolVar(&option.Override, "override", false, "override last result")
 	flag.BoolVar(&option.Verbose, "verbose", true, "show log")
@@ -121,9 +120,6 @@ func parse() {
 	option = opt
 
 	option.UploadEndPoint = fmt.Sprintf("%s/%s", option.Domain, option.UploadEndPoint)
-	option.CreateSessionEndPoint = fmt.Sprintf("%s/%s", option.Domain, option.CreateSessionEndPoint)
-	option.CloseSessionEndPoint = fmt.Sprintf("%s/%s", option.Domain, option.CloseSessionEndPoint)
-	option.GetResultEndPoint = fmt.Sprintf("%s/%s", option.Domain, option.GetResultEndPoint)
 
 	CleanUp()
 }
