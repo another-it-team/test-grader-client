@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/bgo-education/test-grader-client/pkg/option"
 	"github.com/bgo-education/test-grader-client/pkg/utils"
@@ -35,13 +36,19 @@ func ProcessFolder(folder string, writeChan chan<- []string) error {
 	fmt.Printf("Found %d files\n", len(files))
 
 	client := &http.Client{}
+	parans := map[string]string{
+		"folder": folder,
+		"name":   "",
+		"num":    strconv.Itoa(opt.NumCau),
+	}
 
 	for _, file := range files {
 		if opt.Verbose {
 			fmt.Printf("Read %s\n", file)
 		}
+		parans["name"] = file
 
-		req, err := UploadFile(file)
+		req, err := UploadFile(file, parans)
 		if req != nil && err == nil {
 			res, err := client.Do(req)
 			if err != nil {
@@ -77,7 +84,7 @@ func ProcessFolder(folder string, writeChan chan<- []string) error {
 	return nil
 }
 
-func UploadFile(filename string) (*http.Request, error) {
+func UploadFile(filename string, params map[string]string) (*http.Request, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -91,6 +98,10 @@ func UploadFile(filename string) (*http.Request, error) {
 		return nil, err
 	}
 	_, err = io.Copy(part, f)
+
+	for key, val := range params {
+		_ = writer.WriteField(key, val)
+	}
 
 	err = writer.Close()
 	if err != nil {
