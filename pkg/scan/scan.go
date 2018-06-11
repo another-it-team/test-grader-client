@@ -23,6 +23,8 @@ const (
 	JSON = "application/json"
 
 	OK = "OK"
+
+	ImagesResult = "images_result"
 )
 
 var opt = option.GetInstance()
@@ -59,35 +61,32 @@ func ProcessFolder(folder, id string, writeChan chan<- []string) error {
 		if req != nil && err == nil {
 			res, err := client.Do(req)
 			if err != nil {
+				return err
+			}
+
+			grader := &GraderRes{}
+			err = json.NewDecoder(res.Body).Decode(grader)
+			if err != nil {
 				fmt.Println(err)
+				res.Body.Close()
 				continue
 			}
 
-			body := &bytes.Buffer{}
-			_, err = body.ReadFrom(res.Body)
-			if err != nil {
-				fmt.Println(err)
+			if grader.Msg != OK {
+				fmt.Println(grader.Msg)
+				res.Body.Close()
 				continue
 			}
+
 			res.Body.Close()
 
-			var data GraderRes
-			err = json.Unmarshal(body.Bytes(), &data)
+			data, err := grader.ToSlice(lenHeader)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 
-			if data.Msg != OK {
-				fmt.Println(data.Msg)
-				continue
-			}
-
-			writeChan <- data.ToSlice(lenHeader)
-
-			if opt.Verbose {
-				fmt.Printf("File %s, status code: %d\n", file, res.StatusCode)
-			}
+			writeChan <- data
 		} else {
 			fmt.Println(err)
 		}
@@ -131,7 +130,7 @@ func CreateSession() (id string, err error) {
 		return
 	}
 
-	jsonStr := []byte(`{"name":"` + dir + `","override":"` + strconv.FormatBool(true) + `"}`)
+	jsonStr := []byte(`{"name":"` + dir + `","override":"` + strconv.FormatBool(opt.Override) + `"}`)
 	res, err := http.Post(opt.CreateSessionEndPoint, JSON, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return
@@ -155,13 +154,14 @@ func CreateSession() (id string, err error) {
 
 func GetImagesResult(path, id string) error {
 	zipfile := path + ".zip"
+	defer os.Remove(zipfile)
 
 	err := utils.DownloadFile(zipfile, opt.DownloadEndPoint+"/"+id)
 	if err != nil {
 		return err
 	}
 
-	err = utils.Unzip(zipfile, path)
+	err = utils.Unzip(zipfile, ImagesResult)
 	if err != nil {
 		return err
 	}

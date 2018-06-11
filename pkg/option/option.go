@@ -12,9 +12,12 @@ import (
 )
 
 const (
-	JPG  = ".jpg"
-	PNG  = ".png"
-	JPEG = ".jpeg"
+	JPG   = ".jpg"
+	PNG   = ".png"
+	JPEG  = ".jpeg"
+	JPGU  = ".JPG"
+	PNGU  = ".PNG"
+	JPEGU = ".JPEG"
 
 	config    = "option.json"
 	configURL = "https://bgo.edu.vn/test-grader-config.json"
@@ -114,7 +117,7 @@ func parse() {
 	flag.BoolVar(&option.Override, "override", false, "override last result")
 	flag.BoolVar(&option.Verbose, "verbose", false, "show log")
 
-	option.FilesExtension = []string{JPG, PNG, JPEG}
+	option.FilesExtension = []string{JPG, PNG, JPEG, JPGU, PNGU, JPEGU}
 
 	flag.Parse()
 

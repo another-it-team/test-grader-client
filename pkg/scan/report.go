@@ -13,13 +13,13 @@ type Report struct {
 
 func Header(num int) []string {
 	header := []string{
-		"Mã số",
-		"Mã đề",
-		"Ảnh",
+		"Ma so",
+		"Ma de",
+		"Anh",
 	}
 
 	for i := 1; i <= num; i++ {
-		header = append(header, fmt.Sprintf("Câu %d", i))
+		header = append(header, fmt.Sprintf("Cau %d", i))
 	}
 	return header
 }

@@ -60,7 +60,7 @@ func ToMD5(input string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func Unzip(src string, dest string) error {
+func Unzip(src string, dst string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
@@ -73,8 +73,8 @@ func Unzip(src string, dest string) error {
 			return err
 		}
 
-		// Store filename/path for returning and using later on
-		fpath := filepath.Join(dest, f.Name)
+		// Store path for returning and using later on
+		fpath := PrependPath(f.Name, dst)
 		if f.FileInfo().IsDir() {
 			// Make Folder
 			os.MkdirAll(fpath, os.ModePerm)
@@ -112,4 +112,12 @@ func GetCurrentDir() (dir string, err error) {
 	temp := strings.Split(dir, "\\")
 	dir = strings.ToLower(temp[len(temp)-1])
 	return
+}
+
+func PrependPath(path, str string) string {
+	elems := strings.Split(path, "/")
+	size := len(elems)
+	elems = append(elems, elems[size-1])
+	elems[size-1] = str
+	return strings.Join(elems, "/")
 }

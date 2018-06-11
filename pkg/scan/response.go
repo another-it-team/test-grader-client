@@ -1,9 +1,6 @@
 package scan
 
-import (
-	"fmt"
-	"strconv"
-)
+import "strconv"
 
 type GraderRes struct {
 	Msg   string
@@ -22,7 +19,7 @@ type SessionRes struct {
 	Idx string
 }
 
-func (g *GraderRes) ToSlice(size int) []string {
+func (g *GraderRes) ToSlice(size int) ([]string, error) {
 	result := make([]string, size)
 	result[0] = g.Maso
 	result[1] = g.Made
@@ -34,12 +31,11 @@ func (g *GraderRes) ToSlice(size int) []string {
 
 		i, err := strconv.Atoi(cau)
 		if err != nil {
-			fmt.Println(err)
-			continue
+			return nil, err
 		}
 
-		result[i] = ans
+		result[i+2] = ans
 	}
 
-	return result
+	return result, nil
 }

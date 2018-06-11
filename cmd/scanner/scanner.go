@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/bgo-education/test-grader-client/pkg/option"
@@ -36,61 +38,65 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("Found %d files\n", len(folders))
 
-	count, fail := 0, 0
+	wg := &sync.WaitGroup{}
+	count := 0
 	for _, folder := range folders {
 		if !folder.IsDir() {
 			continue
 		}
 
-		name := folder.Name()
-
-		if !opt.Override && scan.CheckFolder(name) {
-			fmt.Printf("Skip %s", name)
-			continue
-		}
-
-		report := scan.NewReport(scan.Header(opt.NumCau))
-		writeChan := make(chan []string, 50)
-		done := make(chan int)
-		go func() {
-			for d := range writeChan {
-				report.Add(d)
+		wg.Add(1)
+		go func(src string) {
+			if !opt.Override && scan.CheckFolder(src) {
+				fmt.Printf("Skip %s", src)
+				return
 			}
-			<-done
-		}()
 
-		fmt.Printf("Processing %s\n", name)
-		err := scan.ProcessFolder(name, id, writeChan)
-		if err != nil {
-			fmt.Println(err)
-			fail++
+			report := scan.NewReport(scan.Header(opt.NumCau))
+			writeChan := make(chan []string, 50)
+			done := make(chan int)
+			go func() {
+				for d := range writeChan {
+					report.Add(d)
+				}
+				<-done
+			}()
+
+			fmt.Printf("Processing %s\n", src)
+			err := scan.ProcessFolder(src, id, writeChan)
+			if err != nil {
+				fmt.Println(err)
+				close(writeChan)
+				return
+			}
 			close(writeChan)
-			continue
-		}
-		close(writeChan)
-		done <- 1
+			done <- 1
 
-		err = report.ToCSV(opt.Dst)
-		if err != nil {
-			fmt.Println(err)
-			fail++
-			continue
-		}
+			err = report.ToCSV(filepath.Join(src, opt.Dst))
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			wg.Done()
+		}(folder.Name())
 
 		count++
 	}
 
-	fmt.Printf("Process success %d folders, failed %d\n", count, fail)
+	wg.Wait()
+	fmt.Printf("Process success %d folders\n", count)
 
 	fmt.Println("Getting zip result file...")
-	err = scan.GetImagesResult(opt.SrcDirectory, id)
+	err = scan.GetImagesResult(scan.ImagesResult, id)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println("Done")
+
+	fmt.Scanln() // wait for Enter Key
 }
 
 func Auth() bool {
