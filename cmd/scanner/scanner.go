@@ -93,9 +93,9 @@ func main() {
 
 		count++
 	}
-	fmt.Println()
-
 	wg.Wait()
+
+	fmt.Println()
 	fmt.Printf("Process success %d folders\n", count)
 
 	fmt.Println("Getting zip result file...")
