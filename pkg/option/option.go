@@ -110,7 +110,7 @@ func parse() {
 	flag.StringVar(&option.DownloadEndPoint, "download", "", "download result file API")
 
 	flag.StringVar(&option.SrcDirectory, "src", ".", "source folder")
-	flag.StringVar(&option.Dst, "dst", "result.csv", "destination result file")
+	flag.StringVar(&option.Dst, "dst", "result.xlsx", "destination result file")
 
 	flag.IntVar(&option.NumCau, "num", 60, "sl questions")
 

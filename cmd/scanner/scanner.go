@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,6 +39,9 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	temp := strings.Split(opt.Dst, ".")
+	dtype := temp[len(temp)-1]
 
 	wg := &sync.WaitGroup{}
 	count := 0
@@ -73,7 +77,11 @@ func main() {
 			close(writeChan)
 			done <- 1
 
-			err = report.ToCSV(filepath.Join(src, opt.Dst))
+			if dtype == scan.CSV {
+				err = report.ToCSV(filepath.Join(src, opt.Dst))
+			} else {
+				err = report.ToXLSX(filepath.Join(src, opt.Dst))
+			}
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -94,7 +102,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("Done")
 
 	fmt.Scanln() // wait for Enter Key
 }

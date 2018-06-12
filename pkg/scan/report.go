@@ -4,6 +4,13 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+
+	"github.com/tealeg/xlsx"
+)
+
+const (
+	XLSX = ".xlsx"
+	CSV  = ".csv"
 )
 
 type Report struct {
@@ -61,4 +68,28 @@ func (r *Report) ToCSV(dst string) error {
 	tsv.WriteAll(r.Data)
 
 	return nil
+}
+
+func (r *Report) ToXLSX(dst string) error {
+	if r.Size() == 0 {
+		fmt.Println("Data empty")
+		return nil
+	}
+
+	file := xlsx.NewFile()
+	sheet, err := file.AddSheet("result")
+	if err != nil {
+		return err
+	}
+
+	data := append([][]string{r.Header}, r.Data...)
+	for _, r := range data {
+		row := sheet.AddRow()
+		for _, c := range r {
+			cell := row.AddCell()
+			cell.Value = c
+		}
+	}
+
+	return file.Save(dst)
 }
