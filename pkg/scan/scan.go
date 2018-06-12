@@ -41,7 +41,7 @@ func CheckFolder(folder string) bool {
 
 func ProcessFolder(folder, id string, writeChan chan<- []string) error {
 	files := utils.GetFilesByType(folder, opt.FilesExtension)
-	fmt.Printf("Found %d files", len(files))
+	fmt.Printf("Found %d files\n", len(files))
 
 	client := &http.Client{}
 	url := opt.UploadEndPoint + "/" + id
@@ -55,7 +55,6 @@ func ProcessFolder(folder, id string, writeChan chan<- []string) error {
 		if opt.Verbose {
 			fmt.Printf("Read %s\n", file)
 		}
-		fmt.Print("|")
 		parans["name"] = file
 
 		req, err := UploadFile(file, url, parans)
@@ -91,6 +90,7 @@ func ProcessFolder(folder, id string, writeChan chan<- []string) error {
 		} else {
 			fmt.Println(err)
 		}
+		fmt.Print("|")
 	}
 
 	return nil

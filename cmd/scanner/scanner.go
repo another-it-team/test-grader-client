@@ -23,6 +23,7 @@ func main() {
 	}
 	fmt.Println("Authentication successful!")
 
+
 	defer utils.Duration(time.Now(), "Scanner")
 
 	fmt.Println("Create session...")
@@ -92,6 +93,7 @@ func main() {
 
 		count++
 	}
+	fmt.Println()
 
 	wg.Wait()
 	fmt.Printf("Process success %d folders\n", count)
@@ -102,6 +104,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("Done")
 
 	fmt.Scanln() // wait for Enter Key
 }
